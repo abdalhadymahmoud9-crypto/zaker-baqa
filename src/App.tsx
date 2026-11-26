@@ -52,12 +52,17 @@ const REVISIONS = [
   { title: 'مراجعة فيزياء الصف الثاني الثانوي، الجزء الأول، أهم أفكار الامتحان', channel: 'EL Mohandes Physics', url: 'https://www.youtube.com/watch?v=XmARqXb0LaM' },
   { title: 'كتاب الامتحان فيزياء تانية ثانوي، الفصل الثالث: التداخل والحيود', channel: 'Mr. Abdalla Zein Eldin', url: 'https://www.youtube.com/watch?v=eetN6qv6U8A' },
 ];
+const HUES = ['#2a9d86', '#5b6bd6', '#e07a3f', '#c2559b', '#3f9ad6', '#8c6bd1', '#c99a14', '#d65b5b'];
+const colorOf = (id: string) => HUES[Math.max(0, SUBJECTS.findIndex(s => s.id === id)) % HUES.length];
 const byId = (id: string) => LESSONS.find(l => l.id === id)!;
 const subj_title = (id: string) => SUBJECTS.find(s => s.id === id)!.title;
 const subj = (id: string) => SUBJECTS.find(s => s.id === id)!.title;
 
 
 const ICONS: Record<string, string> = {
+  home: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  bot: 'M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z',
+  me: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
   study: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20',
   review: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2',
   exam: 'M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9',
@@ -129,10 +134,11 @@ export function App() {
   const today = ymd(new Date());
   const bump = () => setLog({ ...log, [today]: (log[today] || 0) + 1 });
   const review = (id: string) => { const st = (due[id]?.step ?? 0) + 1; const nd = { ...due }; if (st >= INTERVALS.length) delete nd[id]; else nd[id] = { step: st, next: addDays(today, INTERVALS[st]) }; setDue(nd); bump(); };
-  const go = (v: View) => { setView(v); try { window.scrollTo(0, 0); } catch { /* ignore */ } };
+  const [last, setLast] = useLocalState<string>('mz-last.v1', '');
+  const go = (v: View) => { if (v.name === 'lesson') setLast(v.id); setView(v); try { window.scrollTo(0, 0); } catch { /* ignore */ } };
   const toggleDone = (id: string) => { if (!dSaved.ready) return; if (done.includes(id)) { setDone(done.filter(x => x !== id)); const nd = { ...due }; delete nd[id]; setDue(nd); } else { setDone([...done, id]); setDue({ ...due, [id]: { step: 0, next: addDays(today, INTERVALS[0]) } }); bump(); } };
   const answer = (qid: string, i: number) => { if (!(qid in answers)) { setAnswers({ ...answers, [qid]: i }); bump(); } };
-  const tab = view.name === 'subject' || view.name === 'lesson' || view.name === 'study' ? 'study' : view.name;
+  const tab = view.name === 'subject' || view.name === 'lesson' || view.name === 'study' ? 'study' : view.name === 'review' ? 'exam' : view.name;
 
   return <FileCard lang="ar" dir="rtl">
     <div className="mz-app" data-theme={theme}>
@@ -142,59 +148,55 @@ export function App() {
       </header>
       <main className="mz-main">
         {!profile && <Onboarding onDone={finishOnb} onSkip={() => setProfile({ name: '', grade: '', track: '', hours: 2, date: '', hard: [], style: '' })} />}
-        {profile && view.name === 'home' && <Home go={go} done={done.length} profile={profile} streak={streakOf(log)} todayCount={log[today] || 0} dueIds={Object.keys(due).filter(id => due[id].next <= today)} focus={focus} onFocus={() => setFocus(focus + 25)} />}
+        {profile && view.name === 'home' && <Home go={go} doneIds={done} last={last} profile={profile} streak={streakOf(log)} todayCount={log[today] || 0} dueIds={Object.keys(due).filter(id => due[id].next <= today)} focus={focus} onFocus={() => setFocus(focus + 25)} />}
         {profile && view.name === 'study' && <Study go={go} done={done} profile={profile} />}
         {profile && view.name === 'subject' && <Subject id={view.id} go={go} done={done} />}
         {profile && view.name === 'lesson' && <LessonView l={byId(view.id)} go={go} done={done.includes(view.id)} toggle={() => toggleDone(view.id)} answers={answers} answer={answer} note={notes[view.id] || ''} setNote={(t: string) => setNotes({ ...notes, [view.id]: t })} isDue={!!due[view.id] && due[view.id].next <= today} review={() => review(view.id)} />}
         {profile && view.name === 'review' && <Review go={go} />}
-        {profile && view.name === 'exam' && <Exam answers={answers} answer={answer} reset={() => setAnswers({})} />}
+        {profile && view.name === 'exam' && <Exam go={go} answers={answers} answer={answer} reset={() => setAnswers({})} />}
         {profile && view.name === 'bot' && <Bot go={go} />}
         {profile && view.name === 'me' && <Me done={done} answers={answers} plan={plan} setPlan={setPlan} go={go} profile={profile} redo={() => setProfile(null)} />}
-        <p className="mz-foot">النسخة الأولى التجريبية. المحتوى مبني على كتب البكالوريا الرسمية لوزارة التربية والتعليم.</p>
+        <p className="mz-foot">نسخة تجريبية. المحتوى مبني على كتب البكالوريا الرسمية لوزارة التربية والتعليم.</p>
       </main>
       {profile && <nav className="mz-tabs" aria-label="التنقل">
-        {([['home', 'الرئيسية'], ['study', 'ذاكر'], ['review', 'راجع'], ['exam', 'امتحن'], ['bot', 'بكالورياوي'], ['me', 'تقدّمي']] as const).map(([k, t]) =>
-          <button key={k} type="button" className={tab === k ? 'is-on' : ''} onClick={() => go({ name: k } as View)}>{t}</button>)}
+        {([['home', 'الرئيسية'], ['study', 'المواد'], ['exam', 'امتحن'], ['bot', 'بكالورياوي'], ['me', 'أنا']] as const).map(([k, t]) =>
+          <button key={k} type="button" className={tab === k ? 'is-on' : ''} onClick={() => go({ name: k } as View)}><Icon k={k} /><span>{t}</span></button>)}
       </nav>}
     </div>
   </FileCard>;
 }
 
-function Home({ go, done, profile, streak, todayCount, dueIds, focus, onFocus }: { go: (v: View) => void; done: number; profile: Profile; streak: number; todayCount: number; dueIds: string[]; focus: number; onFocus: () => void }) {
-  const firstHard = SUBJECTS.find(s => profile.hard.includes(s.id));
-  const rows: [string, string, string, View][] = [
-    ['study', 'ذاكر', 'دروس مترتبة زي الكتاب الرسمي، مع شرح يوتيوب وأسئلة', { name: 'study' }],
-    ['review', 'راجع', 'مراجعات نهائية بروابطها الأصلية', { name: 'review' }],
-    ['exam', 'امتحن', 'أسئلة بتصحيح فوري وتعرف غلطت فين', { name: 'exam' }],
-  ];
+function Tile({ s, done, go, hard }: { s: typeof SUBJECTS[number]; done: string[]; go: (v: View) => void; hard?: boolean }) {
+  const ls = LESSONS.filter(l => l.subject === s.id); const d = ls.filter(l => done.includes(l.id)).length;
+  return <button type="button" className="mz-tile" style={{ ['--c' as string]: colorOf(s.id) }} onClick={() => go({ name: 'subject', id: s.id })}>
+    <span className="mz-tdot">{s.title.replace(/^ال/, '').charAt(0)}</span>
+    <strong>{s.title}</strong><small>{ls.length} درس</small>
+    <Bar v={d} max={ls.length} />{hard && <span className="mz-flag">صعبة عليك</span>}
+  </button>;
+}
+function Home({ go, profile, streak, todayCount, dueIds, focus, onFocus, last, doneIds }: { go: (v: View) => void; profile: Profile; streak: number; todayCount: number; dueIds: string[]; focus: number; onFocus: () => void; last: string; doneIds: string[] }) {
+  const lastL = last ? LESSONS.find(l => l.id === last) : undefined;
+  const nextL = lastL ? (LESSONS.filter(l => l.subject === lastL.subject && !doneIds.includes(l.id))[0] ?? lastL) : undefined;
+  const hardSub = SUBJECTS.find(s => profile.hard.includes(s.id));
+  const mine = SUBJECTS.filter(s => myGroups(profile).includes(s.group));
+  const shown = [...mine.filter(s => profile.hard.includes(s.id)), ...mine.filter(s => !profile.hard.includes(s.id))].slice(0, 6);
+  const goal = Math.min(todayCount, 3);
+  const cta = () => go(nextL ? { name: 'lesson', id: nextL.id } : hardSub ? { name: 'subject', id: hardSub.id } : { name: 'study' });
   return <>
-    <section className="mz-hero">
-      <span className="mz-chip">{profile.grade === 'g1' ? 'أولى ثانوي' : profile.grade === 'g2' ? 'تانية بكالوريا · ' + profile.track : 'ذاكر بقا'}</span>
-      <h1>ذاكر <em>بقا</em></h1>
-      <p>{profile.name ? `أهلًا يا ${profile.name}. ` : ''}منصة مجانية للبكالوريا المصرية. مذاكرتك كلها في مكان واحد وعلى منهجك.</p>
-      <svg className="mz-pulse" viewBox="0 0 300 40" aria-hidden="true"><path d="M0 22h90l12-16 16 32 14-22 10 6h158" fill="none" stroke="#2fb59a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-      <div className="mz-pills"><button type="button" onClick={() => go(firstHard ? { name: 'subject', id: firstHard.id } : { name: 'study' })}>{firstHard ? `ابدأ بـ ${firstHard.title}` : 'ابدأ المذاكرة'}</button><button type="button" className="mz-ghost" onClick={() => go({ name: 'exam' })}>جرّب امتحان</button></div>
+    <section className="mz-hd">
+      <span className="mz-chip">{profile.grade === 'g1' ? 'أولى ثانوي' : profile.grade === 'g2' ? 'تانية بكالوريا' + (profile.track ? ' · ' + profile.track : '') : 'ذاكر بقا'}</span>
+      <h1>{profile.name ? `أهلًا يا ${profile.name}` : 'أهلًا بيك'}</h1>
+      <p>خطوة النهارده تفرق. كمّل من حيث وقفت.</p>
+      <div className="mz-kpis"><div><b>{streak}</b><span>يوم متتالي</span></div><div><b>{goal}/3</b><span>هدف النهارده</span></div><div><b>{doneIds.length}</b><span>درس خلصته</span></div></div>
     </section>
-    <h2 className="mz-sec">النهارده</h2>
-    <div className="mz-stats"><div><strong>{streak}</strong><span>يوم متتالي</span></div><div><strong>{Math.min(todayCount, 3)}/3</strong><span>هدف النهارده</span></div></div>
-    <Bar v={Math.min(todayCount, 3)} max={3} />
-    <p className="mz-note">الهدف: ٣ نشاطات في اليوم (درس تخلصه أو سؤال تجاوبه). المداومة أهم من الكمية.</p>
-    {dueIds.length > 0 && <><h2 className="mz-h">وقت المراجعة ({dueIds.length})</h2><p className="mz-note">المراجعة بعد ١ و٣ و٧ و١٤ و٣٠ يوم بتثبّت المعلومة أكتر. افتح الدرس وراجعه.</p>
-      {dueIds.slice(0, 6).map(id => <button type="button" key={id} className="mz-lesson" onClick={() => go({ name: 'lesson', id })}><span className="mz-lt">{byId(id).title}</span><span className="mz-badges"><b>{subj(byId(id).subject)}</b></span></button>)}</>}
+    <button type="button" className="mz-cta" onClick={cta}><small>{nextL ? 'كمّل من حيث وقفت' : 'ابدأ من هنا'}</small><strong>{nextL ? nextL.title : hardSub ? `ابدأ بـ ${hardSub.title}` : 'اختار مادتك وابدأ'}</strong>{nextL && <span>{subj(nextL.subject)} · صفحة <bdi>{nextL.bookPage}</bdi></span>}</button>
+    {dueIds.length > 0 && <><h2 className="mz-h">وقت المراجعة <b className="mz-count">{dueIds.length}</b></h2>
+      {dueIds.slice(0, 5).map(id => <button type="button" key={id} className="mz-lesson mz-solo" onClick={() => go({ name: 'lesson', id })}><span className="mz-lt">{byId(id).title}</span><span className="mz-badges"><b>{subj(byId(id).subject)}</b></span></button>)}</>}
+    <h2 className="mz-h">موادك</h2>
+    <div className="mz-grid">{shown.map(s => <Tile key={s.id} s={s} done={doneIds} go={go} hard={profile.hard.includes(s.id)} />)}</div>
+    <button type="button" className="mz-more" onClick={() => go({ name: 'study' })}>كل المواد والبحث ‹</button>
     <Focus onDone={onFocus} total={focus} />
-    <h2 className="mz-sec">ذاكر · راجع · امتحن</h2>
-    <div className="mz-tl">
-      {rows.map(([k, t, d, v]) => <button type="button" key={k} className="mz-tlrow" onClick={() => go(v)}><span className="mz-ico"><Icon k={k} /></span><span className="mz-tlt"><strong>{t}</strong><small>{d}</small></span></button>)}
-    </div>
-    <h2 className="mz-sec">اختار سنتك ومسارك</h2>
-    <div className="mz-cards">
-      <button type="button" className="mz-card is-live" onClick={() => go({ name: 'study' })}>
-        <span className="mz-tag">متاح الآن</span><strong>تانية بكالوريا</strong><span>مسار الطب وعلوم الحياة</span><small>{LESSONS.filter(l => SUBJECTS.find(s => s.id === l.subject)?.group === 'tb').length} درس في 5 مواد</small>
-      </button>
-      <div className="mz-card is-soon"><span className="mz-tag mz-soon">قريبًا</span><strong>كتب المسارات التانية</strong><span>الفهارس لسه ناقصة في الهندسة والأعمال والآداب (المواد الإضافية موجودة في «ذاكر»)</span></div>
-      <div className="mz-card is-soon"><span className="mz-tag mz-soon">متاح</span><strong>أولى ثانوي · الترم الأول</strong><span>١٣ مادة في «ذاكر»، الترم الثاني لسه</span></div>
-    </div>
-    <p className="mz-note">خلّصت {done} درس لحد دلوقتي.</p>
+    <div className="mz-quick"><button type="button" onClick={() => go({ name: 'exam' })}><Icon k="exam" />امتحن نفسك</button><button type="button" onClick={() => go({ name: 'review' })}><Icon k="review" />مراجعات نهائية</button></div>
   </>;
 }
 
@@ -202,16 +204,15 @@ function Study({ go, done, profile }: { go: (v: View) => void; done: string[]; p
   const [q, setQ] = useState('');
   const mine = myGroups(profile);
   const ordered = [...GROUPS.filter(g => mine.includes(g.id)), ...GROUPS.filter(g => !mine.includes(g.id))];
+  const found = q.trim().length > 1 ? LESSONS.filter(l => (l.title + ' ' + (l.chTitle || '')).toLowerCase().includes(q.trim().toLowerCase())) : [];
   return <>
+    <h1 className="mz-t">المواد</h1>
+    <input className="mz-search" type="search" value={q} placeholder="دوّر على أي درس..." aria-label="بحث" onChange={e => setQ(e.target.value)} />
+    {q.trim().length > 1 && <div className="mz-unit">{found.length === 0 && <p className="mz-note mz-pad">مفيش درس بالاسم ده.</p>}{found.slice(0, 25).map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}><span className="mz-lt">{l.title}</span><span className="mz-badges"><b>{subj(l.subject)}</b></span></button>)}</div>}
     {profile.grade === 'g2' && profile.track && profile.track !== TRACKS[0] && <div className="mz-callout"><strong>مسارك: {profile.track}</strong>كتب مسارك لسه بتتجهز. ده المتاح حاليًا من الكتب الرسمية.</div>}
-    <div className="mz-form"><label>دوّر على أي درس<input type="search" value={q} placeholder="اكتب جزء من اسم الدرس" onChange={e => setQ(e.target.value)} /></label></div>
-    {q.trim().length > 1 && <div className="mz-unit">{LESSONS.filter(l => (l.title + ' ' + l.chTitle).toLowerCase().includes(q.trim().toLowerCase())).slice(0, 25).map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}><span className="mz-lt">{l.title}</span><span className="mz-badges"><b>{subj(l.subject)}</b></span></button>)}</div>}
-    <h1 className="mz-t">اختار المادة</h1>
-    <p className="mz-note">عناوين الدروس وأرقام الصفحات من كتب الوزارة الرسمية، مع رابط الكتاب. الملخصات والأسئلة بتتضاف بس لما تتكتب من الكتاب نفسه.</p>
-    {ordered.map(g => <section key={g.id}><h2 className="mz-h">{g.title}</h2><div className="mz-cards">
-      {SUBJECTS.filter(s => s.group === g.id).map(s => { const ls = LESSONS.filter(l => l.subject === s.id); const d = ls.filter(l => done.includes(l.id)).length;
-        return <button key={s.id} type="button" className="mz-card is-live" onClick={() => go({ name: 'subject', id: s.id })}>{profile.hard.includes(s.id) && <span className="mz-tag">صعبة عليك</span>}<strong>{s.title}</strong><span>{s.note}</span><Bar v={d} max={ls.length} /><small>{d} من {ls.length} درس</small></button>; })}
-    </div></section>)}
+    {ordered.map(g => <section key={g.id}><h2 className="mz-h">{g.title}</h2><div className="mz-grid">
+      {SUBJECTS.filter(s => s.group === g.id).map(s => <Tile key={s.id} s={s} done={done} go={go} hard={profile.hard.includes(s.id)} />)}</div></section>)}
+    <p className="mz-note mz-pad">العناوين وأرقام الصفحات من كتب الوزارة الرسمية. الملخصات والأسئلة بتتضاف بس لما تتكتب من الكتاب نفسه.</p>
   </>;
 }
 
@@ -220,38 +221,39 @@ function Bar({ v, max }: { v: number; max: number }) { return <span className="m
 function Subject({ id, go, done }: { id: SubjId; go: (v: View) => void; done: string[] }) {
   const ls = LESSONS.filter(l => l.subject === id);
   const parts = Array.from(new Set(ls.map(l => l.part)));
+  const d = ls.filter(l => done.includes(l.id)).length;
+  const s = SUBJECTS.find(x => x.id === id)!;
   return <>
     <button type="button" className="mz-back" onClick={() => go({ name: 'study' })}>‹ المواد</button>
-    <h1 className="mz-t">{subj(id)}</h1>
+    <div className="mz-shead" style={{ ['--c' as string]: colorOf(id) }}><span className="mz-tdot">{s.title.replace(/^ال/, '').charAt(0)}</span><div><h1>{s.title}</h1><small>{s.note} · {d} من {ls.length} درس</small></div></div>
+    <Bar v={d} max={ls.length} />
     {parts.map(p => { const chs = Array.from(new Set(ls.filter(l => l.part === p).map(l => l.ch)));
-      return <section key={p}><h2 className="mz-h">{p}</h2>
-        {chs.map(c => <div key={c} className="mz-unit"><h3>{c === 0 ? '' : `الفصل ${c}`}: {(CHAPTERS[`${id}|${p}|${c}`] ?? ls.find(l => l.part === p && l.ch === c)?.chTitle)}</h3>
-          {ls.filter(l => l.part === p && l.ch === c).map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}>
-            <span className="mz-num"><bdi>{l.num}</bdi></span><span className="mz-lt">{l.title}</span>
-            <span className="mz-badges">{QUESTIONS.some(q => q.lesson === l.id) && <b>أسئلة</b>}{l.video && <b>فيديو</b>}{done.includes(l.id) && <b className="mz-ok">تم</b>}</span></button>)}
-        </div>)}
+      return <section key={p}>{parts.length > 1 && <h2 className="mz-h">{p}</h2>}
+        {chs.map((c, ci) => { const cl = ls.filter(l => l.part === p && l.ch === c); const cd = cl.filter(l => done.includes(l.id)).length;
+          return <details key={c} className="mz-unit" open={ci === 0 && p === parts[0]}><summary><span>{c === 0 ? '' : `الفصل ${c}: `}{(CHAPTERS[`${id}|${p}|${c}`] ?? cl[0]?.chTitle)}</span><em>{cd}/{cl.length}</em></summary>
+            {cl.map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}>
+              <span className={'mz-num' + (done.includes(l.id) ? ' is-done' : '')}><bdi>{done.includes(l.id) ? '✓' : l.num}</bdi></span><span className="mz-lt">{l.title}</span>
+              <span className="mz-badges">{QUESTIONS.some(q => q.lesson === l.id) && <b>أسئلة</b>}{l.video && <b>فيديو</b>}</span></button>)}
+          </details>; })}
       </section>; })}
   </>;
 }
 
 function LessonView({ l, go, done, toggle, answers, answer, note, setNote, isDue, review }: { note: string; setNote: (t: string) => void; isDue: boolean; review: () => void; l: Lesson; go: (v: View) => void; done: boolean; toggle: () => void; answers: Record<string, number>; answer: (q: string, i: number) => void }) {
   const qs = QUESTIONS.filter(q => q.lesson === l.id);
-  return <>
+  return <div style={{ ['--c' as string]: colorOf(l.subject) }}>
     <button type="button" className="mz-back" onClick={() => go({ name: 'subject', id: l.subject })}>‹ {subj(l.subject)}</button>
     <p className="mz-crumb">{l.part} · الفصل <bdi>{l.ch}</bdi></p>
-    <h1 className="mz-t"><bdi>{l.num}</bdi> · {l.title}</h1>
-    <h2 className="mz-h">المحتوى الرسمي</h2>
-    <Ext href={l.book} cls="mz-big">افتح الدرس في كتاب الوزارة (يبدأ حوالي صفحة <bdi>{l.bookPage}</bdi> من الكتاب)</Ext>
-    <p className="mz-note">الكتاب PDF كبير. افتحه على واي فاي لو الباقة قليلة.</p>
-    <h2 className="mz-h">شرح فيديو</h2>
-    {l.video ? <div className="mz-video"><Ext href={l.video.url} cls="mz-big">شاهد على يوتيوب</Ext><span>القناة: <bdi>{l.video.channel}</bdi> · {l.video.note}</span><small>الفيديو على قناة صاحبه وبرابطه الأصلي.</small></div>
-      : <div className="mz-video"><span>لسه ملقيناش فيديو مؤكد لهذا الدرس.</span><Ext href={l.search} cls="mz-link">ابحث عنه على يوتيوب</Ext><small>ده رابط بحث، مش فيديو متأكد منه.</small></div>}
-    <h2 className="mz-h">أسئلة على الدرس</h2>
-    {qs.length === 0 ? <p className="mz-note">أسئلة هذا الدرس لسه مش جاهزة. هتتضاف من الكتاب الرسمي.</p> : qs.map((q, i) => <QCard key={q.id} q={q} n={i + 1} picked={answers[q.id]} answer={answer} />)}
-    <h2 className="mz-h">ملاحظاتك</h2><textarea className="mz-notes" rows={4} value={note} placeholder="اكتب بكلامك أهم الأفكار، الكتابة بإيدك بتثبّت المعلومة" onChange={e => setNote(e.target.value)} />
-    {isDue && <button type="button" className="mz-donebtn" onClick={review}>راجعت الدرس ده النهارده</button>}
-    <button type="button" className={done ? 'mz-donebtn is-on' : 'mz-donebtn'} onClick={toggle}>{done ? 'تم. اضغط لو عايز تلغيها' : 'علّم الدرس إنه خلص'}</button>
-  </>;
+    <h1 className="mz-lh"><bdi>{l.num}</bdi> {l.title}</h1>
+    <div className="mz-step"><span className="mz-sn">١</span><div><h2>اقرأ في الكتاب</h2><Ext href={l.book} cls="mz-big">افتح الدرس في كتاب الوزارة (من صفحة <bdi>{l.bookPage}</bdi>)</Ext><p className="mz-note">الكتاب PDF كبير. افتحه على واي فاي لو الباقة قليلة.</p></div></div>
+    <div className="mz-step"><span className="mz-sn">٢</span><div><h2>شاهد الشرح</h2>
+      {l.video ? <div className="mz-video"><Ext href={l.video.url} cls="mz-big">شاهد على يوتيوب</Ext><span>القناة: <bdi>{l.video.channel}</bdi> · {l.video.note}</span></div>
+        : <div className="mz-video"><Ext href={l.search} cls="mz-ghostlink">ابحث عن الدرس على يوتيوب</Ext><small>ده رابط بحث، مش فيديو متأكد منه.</small></div>}</div></div>
+    <div className="mz-step"><span className="mz-sn">٣</span><div><h2>جاوب</h2>{qs.length === 0 ? <p className="mz-note">أسئلة الدرس ده لسه مش جاهزة. هتتضاف من الكتاب الرسمي.</p> : qs.map((q, i) => <QCard key={q.id} q={q} n={i + 1} picked={answers[q.id]} answer={answer} />)}</div></div>
+    <div className="mz-step"><span className="mz-sn">٤</span><div><h2>لخّص بإيدك</h2><textarea className="mz-notes" rows={4} value={note} placeholder="اكتب أهم الأفكار بكلامك. الكتابة بإيدك بتثبّت المعلومة." onChange={e => setNote(e.target.value)} /></div></div>
+    {isDue && <button type="button" className="mz-ghostbtn" onClick={review}>راجعت الدرس ده النهارده</button>}
+    <div className="mz-donebar"><button type="button" className={done ? 'mz-donebtn is-on' : 'mz-donebtn'} onClick={toggle}>{done ? 'تم ✓ (اضغط للإلغاء)' : 'خلصت الدرس'}</button></div>
+  </div>;
 }
 
 function QCard({ q, n, picked, answer }: { q: typeof QUESTIONS[number]; n: number; picked?: number; answer: (q: string, i: number) => void }) {
@@ -271,10 +273,11 @@ function Review({ go }: { go: (v: View) => void }) {
   </>;
 }
 
-function Exam({ answers, answer, reset }: { answers: Record<string, number>; answer: (q: string, i: number) => void; reset: () => void }) {
+function Exam({ go, answers, answer, reset }: { go: (v: View) => void; answers: Record<string, number>; answer: (q: string, i: number) => void; reset: () => void }) {
   const ans = QUESTIONS.filter(q => q.id in answers); const right = ans.filter(q => answers[q.id] === q.answer).length;
   return <>
     <h1 className="mz-t">امتحن</h1>
+    <button type="button" className="mz-more" onClick={() => go({ name: 'review' })}>مراجعات نهائية على يوتيوب ‹</button>
     <p className="mz-note">كل الأسئلة المتاحة حاليًا ({QUESTIONS.length}) من كتابي الفيزياء. نتيجتك: {right} من {ans.length} اتجاوب.</p>
     {QUESTIONS.map((q, i) => <div key={q.id}><p className="mz-crumb">{byId(q.lesson).title}</p><QCard q={q} n={i + 1} picked={answers[q.id]} answer={answer} /></div>)}
     <button type="button" className="mz-ghostbtn" onClick={reset}>مسح الإجابات والبدء من جديد</button>
