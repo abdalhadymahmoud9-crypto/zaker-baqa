@@ -1,0 +1,19 @@
+{
+ "name": "ذاكر بقا",
+ "short_name": "ذاكر بقا",
+ "lang": "ar",
+ "dir": "rtl",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#232a45",
+ "theme_color": "#232a45",
+ "icons": [
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any"
+  }
+ ]
+}
