@@ -1,5 +1,5 @@
-export type Lesson = {id:string;subject:'physics'|'math'|'arabic'|'history'|'english';part:string;ch:number;num:string;title:string;bookPage:number;book:string;search:string;video?:{id:string;url:string;channel:string;note:string}};
-export const LESSONS: Lesson[] = [
+export type Lesson = {id:string;subject:string;chTitle?:string;grade?:string;part:string;ch:number;num:string;title:string;bookPage:number;book:string;search:string;video?:{id:string;url:string;channel:string;note:string}};
+const BASE: Lesson[] = [
  {
   "id": "phys1-1-1",
   "subject": "physics",
@@ -948,3 +948,5 @@ export const LESSONS: Lesson[] = [
 {"id": "en2-9", "subject": "english", "part": "الجزء الثاني", "ch": 9, "num": "U9", "title": "Unit 9: Circles of Belonging (A Sense of Belonging; Inclusion and Community Action)", "bookPage": 101, "book": "https://egyptianbaccalaureate.blob.core.windows.net/egyptianbaccalaureate/Eng-L1-EB-Part2.pdf#page=101", "search": "https://www.youtube.com/results?search_query=English%20Egyptian%20Baccalaureate%20second%20year%20Unit%209%20Circles%20of%20Belonging"},
 {"id": "en2-10", "subject": "english", "part": "الجزء الثاني", "ch": 10, "num": "U10", "title": "Unit 10: Behind the Buy (What We Don't See; The Price We Don't Count)", "bookPage": 126, "book": "https://egyptianbaccalaureate.blob.core.windows.net/egyptianbaccalaureate/Eng-L1-EB-Part2.pdf#page=126", "search": "https://www.youtube.com/results?search_query=English%20Egyptian%20Baccalaureate%20second%20year%20Unit%2010%20Behind%20the%20Buy"},
 ];
+import { EXTRA } from './extra';
+export const LESSONS: Lesson[] = [...BASE, ...EXTRA];
