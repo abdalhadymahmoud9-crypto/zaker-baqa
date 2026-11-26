@@ -61,3 +61,8 @@ html, body, #root { margin: 0; min-height: 100%; }
 .mz-msg { max-width:88%; padding:12px 14px; border-radius:18px; background:var(--mz-card); border:1px solid var(--mz-line); } .mz-msg.me { align-self:flex-start; background:var(--mz-stage); color:#fff; border:0; } .mz-msg.bot { align-self:flex-end; } .mz-msg small { display:block; color:var(--mz-ink2); margin-top:6px; }
 .mz-msg .mz-lesson { border:1px solid var(--mz-line); border-radius:12px; margin-top:8px; }
 .mz-ask { display:flex; gap:8px; } .mz-ask input { flex:1; min-height:48px; border-radius:24px; border:1.5px solid var(--mz-line); padding:0 16px; background:var(--mz-card); color:var(--mz-ink); } .mz-ask button { min-height:48px; border-radius:24px; border:0; padding:0 20px; background:var(--mz-yel); color:#1f2747; font-weight:800; cursor:pointer; }
+.mz-chips { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 18px; }
+.mz-onb .mz-form input[type=text] { width:100%; }
+.mz-onbbtn { margin:20px 0; } .mz-onbbtn button:disabled { opacity:.45; }
+.mz-ghost2 { color:var(--mz-ink) !important; border-color:var(--mz-line) !important; background:transparent !important; }
+.mz-link { background:none; border:0; padding:0 6px; cursor:pointer; font:inherit; }
