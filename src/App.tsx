@@ -99,6 +99,21 @@ function Onboarding({ onDone, onSkip }: { onDone: (p: Profile) => void; onSkip: 
   </section>;
 }
 
+const INTERVALS = [1, 3, 7, 14, 30];
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const addDays = (s: string, n: number) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return ymd(d); };
+function streakOf(log: Record<string, number>) { let s = 0; let d = ymd(new Date()); if (!log[d]) d = addDays(d, -1); while (log[d]) { s++; d = addDays(d, -1); } return s; }
+type Due = Record<string, { step: number; next: string }>;
+function Focus({ onDone, total }: { onDone: () => void; total: number }) {
+  const [end, setEnd] = useState<number | null>(null); const [, tick] = useState(0);
+  React.useEffect(() => { if (end === null) return; const t = setInterval(() => { tick(x => x + 1); if (Date.now() >= end) { setEnd(null); onDone(); } }, 500); return () => clearInterval(t); }, [end]);
+  const left = end === null ? 25 * 60 : Math.max(0, Math.round((end - Date.now()) / 1000));
+  return <div className="mz-callout mz-focus"><strong>مؤقت تركيز ٢٥ دقيقة</strong>
+    <span className="mz-clock" dir="ltr">{String(Math.floor(left / 60)).padStart(2, '0')}:{String(left % 60).padStart(2, '0')}</span>
+    <button type="button" className="mz-chipb is-on" onClick={() => setEnd(end === null ? Date.now() + 25 * 60000 : null)}>{end === null ? 'ابدأ' : 'وقّف'}</button>
+    <small>ركّز ٢٥ دقيقة من غير موبايل، وبعدها ريّح ٥. إجمالي تركيزك: {total} دقيقة.</small></div>;
+}
+
 export function App() {
   const [view, setView] = useState<View>({ name: 'home' });
   const [theme, setTheme, tSaved] = useLocalState<string>('mz-theme.v1', 'light');
@@ -107,9 +122,16 @@ export function App() {
   const [plan, setPlan] = useLocalState<{ date: string; hours: number }>('mz-plan.v1', { date: '', hours: 2 });
   const [profile, setProfile] = useLocalState<Profile | null>('mz-profile.v1', null);
   const finishOnb = (p: Profile) => { setProfile(p); if (p.date || p.hours) setPlan({ date: p.date, hours: p.hours }); };
+  const [log, setLog] = useLocalState<Record<string, number>>('mz-log.v1', {});
+  const [due, setDue] = useLocalState<Due>('mz-due.v1', {});
+  const [notes, setNotes] = useLocalState<Record<string, string>>('mz-notes.v1', {});
+  const [focus, setFocus] = useLocalState<number>('mz-focus.v1', 0);
+  const today = ymd(new Date());
+  const bump = () => setLog({ ...log, [today]: (log[today] || 0) + 1 });
+  const review = (id: string) => { const st = (due[id]?.step ?? 0) + 1; const nd = { ...due }; if (st >= INTERVALS.length) delete nd[id]; else nd[id] = { step: st, next: addDays(today, INTERVALS[st]) }; setDue(nd); bump(); };
   const go = (v: View) => { setView(v); try { window.scrollTo(0, 0); } catch { /* ignore */ } };
-  const toggleDone = (id: string) => { if (dSaved.ready) setDone(done.includes(id) ? done.filter(x => x !== id) : [...done, id]); };
-  const answer = (qid: string, i: number) => { if (!(qid in answers)) setAnswers({ ...answers, [qid]: i }); };
+  const toggleDone = (id: string) => { if (!dSaved.ready) return; if (done.includes(id)) { setDone(done.filter(x => x !== id)); const nd = { ...due }; delete nd[id]; setDue(nd); } else { setDone([...done, id]); setDue({ ...due, [id]: { step: 0, next: addDays(today, INTERVALS[0]) } }); bump(); } };
+  const answer = (qid: string, i: number) => { if (!(qid in answers)) { setAnswers({ ...answers, [qid]: i }); bump(); } };
   const tab = view.name === 'subject' || view.name === 'lesson' || view.name === 'study' ? 'study' : view.name;
 
   return <FileCard lang="ar" dir="rtl">
@@ -120,10 +142,10 @@ export function App() {
       </header>
       <main className="mz-main">
         {!profile && <Onboarding onDone={finishOnb} onSkip={() => setProfile({ name: '', grade: '', track: '', hours: 2, date: '', hard: [], style: '' })} />}
-        {profile && view.name === 'home' && <Home go={go} done={done.length} profile={profile} />}
+        {profile && view.name === 'home' && <Home go={go} done={done.length} profile={profile} streak={streakOf(log)} todayCount={log[today] || 0} dueIds={Object.keys(due).filter(id => due[id].next <= today)} focus={focus} onFocus={() => setFocus(focus + 25)} />}
         {profile && view.name === 'study' && <Study go={go} done={done} profile={profile} />}
         {profile && view.name === 'subject' && <Subject id={view.id} go={go} done={done} />}
-        {profile && view.name === 'lesson' && <LessonView l={byId(view.id)} go={go} done={done.includes(view.id)} toggle={() => toggleDone(view.id)} answers={answers} answer={answer} />}
+        {profile && view.name === 'lesson' && <LessonView l={byId(view.id)} go={go} done={done.includes(view.id)} toggle={() => toggleDone(view.id)} answers={answers} answer={answer} note={notes[view.id] || ''} setNote={(t: string) => setNotes({ ...notes, [view.id]: t })} isDue={!!due[view.id] && due[view.id].next <= today} review={() => review(view.id)} />}
         {profile && view.name === 'review' && <Review go={go} />}
         {profile && view.name === 'exam' && <Exam answers={answers} answer={answer} reset={() => setAnswers({})} />}
         {profile && view.name === 'bot' && <Bot go={go} />}
@@ -138,7 +160,7 @@ export function App() {
   </FileCard>;
 }
 
-function Home({ go, done, profile }: { go: (v: View) => void; done: number; profile: Profile }) {
+function Home({ go, done, profile, streak, todayCount, dueIds, focus, onFocus }: { go: (v: View) => void; done: number; profile: Profile; streak: number; todayCount: number; dueIds: string[]; focus: number; onFocus: () => void }) {
   const firstHard = SUBJECTS.find(s => profile.hard.includes(s.id));
   const rows: [string, string, string, View][] = [
     ['study', 'ذاكر', 'دروس مترتبة زي الكتاب الرسمي، مع شرح يوتيوب وأسئلة', { name: 'study' }],
@@ -153,6 +175,13 @@ function Home({ go, done, profile }: { go: (v: View) => void; done: number; prof
       <svg className="mz-pulse" viewBox="0 0 300 40" aria-hidden="true"><path d="M0 22h90l12-16 16 32 14-22 10 6h158" fill="none" stroke="#2fb59a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
       <div className="mz-pills"><button type="button" onClick={() => go(firstHard ? { name: 'subject', id: firstHard.id } : { name: 'study' })}>{firstHard ? `ابدأ بـ ${firstHard.title}` : 'ابدأ المذاكرة'}</button><button type="button" className="mz-ghost" onClick={() => go({ name: 'exam' })}>جرّب امتحان</button></div>
     </section>
+    <h2 className="mz-sec">النهارده</h2>
+    <div className="mz-stats"><div><strong>{streak}</strong><span>يوم متتالي</span></div><div><strong>{Math.min(todayCount, 3)}/3</strong><span>هدف النهارده</span></div></div>
+    <Bar v={Math.min(todayCount, 3)} max={3} />
+    <p className="mz-note">الهدف: ٣ نشاطات في اليوم (درس تخلصه أو سؤال تجاوبه). المداومة أهم من الكمية.</p>
+    {dueIds.length > 0 && <><h2 className="mz-h">وقت المراجعة ({dueIds.length})</h2><p className="mz-note">المراجعة بعد ١ و٣ و٧ و١٤ و٣٠ يوم بتثبّت المعلومة أكتر. افتح الدرس وراجعه.</p>
+      {dueIds.slice(0, 6).map(id => <button type="button" key={id} className="mz-lesson" onClick={() => go({ name: 'lesson', id })}><span className="mz-lt">{byId(id).title}</span><span className="mz-badges"><b>{subj(byId(id).subject)}</b></span></button>)}</>}
+    <Focus onDone={onFocus} total={focus} />
     <h2 className="mz-sec">ذاكر · راجع · امتحن</h2>
     <div className="mz-tl">
       {rows.map(([k, t, d, v]) => <button type="button" key={k} className="mz-tlrow" onClick={() => go(v)}><span className="mz-ico"><Icon k={k} /></span><span className="mz-tlt"><strong>{t}</strong><small>{d}</small></span></button>)}
@@ -160,7 +189,7 @@ function Home({ go, done, profile }: { go: (v: View) => void; done: number; prof
     <h2 className="mz-sec">اختار سنتك ومسارك</h2>
     <div className="mz-cards">
       <button type="button" className="mz-card is-live" onClick={() => go({ name: 'study' })}>
-        <span className="mz-tag">متاح الآن</span><strong>تانية بكالوريا</strong><span>مسار الطب وعلوم الحياة</span><small>{LESSONS.length} درس في الفيزياء والرياضيات</small>
+        <span className="mz-tag">متاح الآن</span><strong>تانية بكالوريا</strong><span>مسار الطب وعلوم الحياة</span><small>{LESSONS.filter(l => SUBJECTS.find(s => s.id === l.subject)?.group === 'tb').length} درس في 5 مواد</small>
       </button>
       <div className="mz-card is-soon"><span className="mz-tag mz-soon">قريبًا</span><strong>كتب المسارات التانية</strong><span>الفهارس لسه ناقصة في الهندسة والأعمال والآداب (المواد الإضافية موجودة في «ذاكر»)</span></div>
       <div className="mz-card is-soon"><span className="mz-tag mz-soon">متاح</span><strong>أولى ثانوي · الترم الأول</strong><span>١٣ مادة في «ذاكر»، الترم الثاني لسه</span></div>
@@ -170,10 +199,13 @@ function Home({ go, done, profile }: { go: (v: View) => void; done: number; prof
 }
 
 function Study({ go, done, profile }: { go: (v: View) => void; done: string[]; profile: Profile }) {
+  const [q, setQ] = useState('');
   const mine = myGroups(profile);
   const ordered = [...GROUPS.filter(g => mine.includes(g.id)), ...GROUPS.filter(g => !mine.includes(g.id))];
   return <>
     {profile.grade === 'g2' && profile.track && profile.track !== TRACKS[0] && <div className="mz-callout"><strong>مسارك: {profile.track}</strong>كتب مسارك لسه بتتجهز. ده المتاح حاليًا من الكتب الرسمية.</div>}
+    <div className="mz-form"><label>دوّر على أي درس<input type="search" value={q} placeholder="اكتب جزء من اسم الدرس" onChange={e => setQ(e.target.value)} /></label></div>
+    {q.trim().length > 1 && <div className="mz-unit">{LESSONS.filter(l => (l.title + ' ' + l.chTitle).toLowerCase().includes(q.trim().toLowerCase())).slice(0, 25).map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}><span className="mz-lt">{l.title}</span><span className="mz-badges"><b>{subj(l.subject)}</b></span></button>)}</div>}
     <h1 className="mz-t">اختار المادة</h1>
     <p className="mz-note">عناوين الدروس وأرقام الصفحات من كتب الوزارة الرسمية، مع رابط الكتاب. الملخصات والأسئلة بتتضاف بس لما تتكتب من الكتاب نفسه.</p>
     {ordered.map(g => <section key={g.id}><h2 className="mz-h">{g.title}</h2><div className="mz-cards">
@@ -202,7 +234,7 @@ function Subject({ id, go, done }: { id: SubjId; go: (v: View) => void; done: st
   </>;
 }
 
-function LessonView({ l, go, done, toggle, answers, answer }: { l: Lesson; go: (v: View) => void; done: boolean; toggle: () => void; answers: Record<string, number>; answer: (q: string, i: number) => void }) {
+function LessonView({ l, go, done, toggle, answers, answer, note, setNote, isDue, review }: { note: string; setNote: (t: string) => void; isDue: boolean; review: () => void; l: Lesson; go: (v: View) => void; done: boolean; toggle: () => void; answers: Record<string, number>; answer: (q: string, i: number) => void }) {
   const qs = QUESTIONS.filter(q => q.lesson === l.id);
   return <>
     <button type="button" className="mz-back" onClick={() => go({ name: 'subject', id: l.subject })}>‹ {subj(l.subject)}</button>
@@ -216,6 +248,8 @@ function LessonView({ l, go, done, toggle, answers, answer }: { l: Lesson; go: (
       : <div className="mz-video"><span>لسه ملقيناش فيديو مؤكد لهذا الدرس.</span><Ext href={l.search} cls="mz-link">ابحث عنه على يوتيوب</Ext><small>ده رابط بحث، مش فيديو متأكد منه.</small></div>}
     <h2 className="mz-h">أسئلة على الدرس</h2>
     {qs.length === 0 ? <p className="mz-note">أسئلة هذا الدرس لسه مش جاهزة. هتتضاف من الكتاب الرسمي.</p> : qs.map((q, i) => <QCard key={q.id} q={q} n={i + 1} picked={answers[q.id]} answer={answer} />)}
+    <h2 className="mz-h">ملاحظاتك</h2><textarea className="mz-notes" rows={4} value={note} placeholder="اكتب بكلامك أهم الأفكار، الكتابة بإيدك بتثبّت المعلومة" onChange={e => setNote(e.target.value)} />
+    {isDue && <button type="button" className="mz-donebtn" onClick={review}>راجعت الدرس ده النهارده</button>}
     <button type="button" className={done ? 'mz-donebtn is-on' : 'mz-donebtn'} onClick={toggle}>{done ? 'تم. اضغط لو عايز تلغيها' : 'علّم الدرس إنه خلص'}</button>
   </>;
 }
