@@ -66,3 +66,6 @@ html, body, #root { margin: 0; min-height: 100%; }
 .mz-onbbtn { margin:20px 0; } .mz-onbbtn button:disabled { opacity:.45; }
 .mz-ghost2 { color:var(--mz-ink) !important; border-color:var(--mz-line) !important; background:transparent !important; }
 .mz-link { background:none; border:0; padding:0 6px; cursor:pointer; font:inherit; }
+.mz-notes { width:100%; background:var(--mz-card); border:1.5px solid var(--mz-line); border-radius:14px; padding:10px; color:var(--mz-ink); font-size:15px; }
+.mz-focus { display:flex; flex-direction:column; gap:8px; align-items:flex-start; } .mz-clock { font-size:34px; font-weight:800; letter-spacing:2px; }
+.mz-form input[type=search] { width:100%; }
