@@ -3,14 +3,39 @@ import { FileCard, useLocalState } from '@instinct/files';
 import { LESSONS, Lesson } from './data';
 import { QUESTIONS } from './questions';
 
-type SubjId = 'physics' | 'math' | 'arabic' | 'history' | 'english';
+type SubjId = string;
 type View = { name: 'home' } | { name: 'study' } | { name: 'subject'; id: SubjId } | { name: 'lesson'; id: string } | { name: 'review' } | { name: 'exam' } | { name: 'me' } | { name: 'bot' };
+const GROUPS = [{ id: 'tb', title: 'تانية بكالوريا · مسار الطب وعلوم الحياة' }, { id: 'xb', title: 'مواد بكالوريا إضافية' }, { id: 'g1', title: 'أولى ثانوي · الترم الأول' }];
 const SUBJECTS = [
-  { id: 'physics' as const, title: 'الفيزياء', note: 'الجزءان الأول والثاني، تانية بكالوريا' },
-  { id: 'arabic' as const, title: 'اللغة العربية', note: 'الجزءان الأول والثاني، تانية بكالوريا' },
-  { id: 'history' as const, title: 'التاريخ', note: 'الجزءان الأول والثاني، تانية بكالوريا' },
-  { id: 'english' as const, title: 'اللغة الإنجليزية', note: 'الجزءان الأول والثاني، تانية بكالوريا (كتاب بالإنجليزي)' },
-  { id: 'math' as const, title: 'الرياضيات', note: 'الجزءان الأول والثاني، تانية بكالوريا' },
+  { id: 'physics', title: 'الفيزياء', note: 'الجزءان الأول والثاني', group: 'tb' },
+  { id: 'math', title: 'الرياضيات', note: 'الجزءان الأول والثاني', group: 'tb' },
+  { id: 'arabic', title: 'اللغة العربية', note: 'الجزءان الأول والثاني', group: 'tb' },
+  { id: 'history', title: 'التاريخ', note: 'الجزءان الأول والثاني', group: 'tb' },
+  { id: 'english', title: 'اللغة الإنجليزية', note: 'الجزءان الأول والثاني (الكتاب بالإنجليزي)', group: 'tb' },
+  { id: 'chemistry', title: 'الكيمياء', note: 'كتب البكالوريا الرسمية', group: 'xb' },
+  { id: 'programming', title: 'البرمجة والذكاء الاصطناعي', note: 'كتب البكالوريا الرسمية', group: 'xb' },
+  { id: 'psychology', title: 'علم النفس', note: 'كتب البكالوريا الرسمية', group: 'xb' },
+  { id: 'business', title: 'مبادئ الأعمال', note: 'وحدات الكتاب فقط (مفيش دروس في الفهرس)', group: 'xb' },
+  { id: 'accounting', title: 'المحاسبة', note: 'وحدات الكتاب فقط، بعض الصفحات تقريبية (±١)', group: 'xb' },
+  { id: 'french1', title: 'الفرنسية (لغة أولى)', note: 'وحدات الكتاب فقط', group: 'xb' },
+  { id: 'french2', title: 'الفرنسية (لغة ثانية)', note: 'دروس الكتاب', group: 'xb' },
+  { id: 'german2', title: 'الألمانية (لغة ثانية)', note: 'دروس الكتاب', group: 'xb' },
+  { id: 'spanish2', title: 'الإسبانية (لغة ثانية)', note: 'الجزء الأول، وحدات فقط', group: 'xb' },
+  { id: 'italian2', title: 'الإيطالية (لغة ثانية)', note: 'الجزء الأول، وحدات فقط', group: 'xb' },
+  { id: 'chinese2', title: 'الصينية (لغة ثانية)', note: '٣ مجموعات حسب صفحات الكتاب (تحتاج مراجعة)', group: 'xb' },
+  { id: 'g1-math', title: 'الرياضيات', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-arabic', title: 'اللغة العربية', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-english', title: 'اللغة الإنجليزية', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-science', title: 'العلوم المتكاملة', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-ict', title: 'تكنولوجيا المعلومات والاتصالات', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-philosophy', title: 'الفلسفة والمنطق', note: 'الترم الأول (الفصول فقط)', group: 'g1' },
+  { id: 'g1-history', title: 'التاريخ', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-islamic', title: 'التربية الإسلامية', note: 'الترم الأول والثاني', group: 'g1' },
+  { id: 'g1-nahw', title: 'النحو والصرف', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-christian', title: 'التربية المسيحية', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-english2', title: 'اللغة الإنجليزية (لغة ثانية)', note: 'الترم الأول', group: 'g1' },
+  { id: 'g1-french2', title: 'الفرنسية (لغة ثانية)', note: 'وحدات فقط', group: 'g1' },
+  { id: 'g1-story', title: 'قصة عنترة', note: 'الترم الأول', group: 'g1' },
 ];
 const CHAPTERS: Record<string, string> = {
   'english|الجزء الأول|1': "Concept 1: Well-being", 'english|الجزء الأول|2': "Concept 2: Experiences", 'english|الجزء الأول|3': "Concept 3: Identity", 'english|الجزء الأول|4': "Concept 4: Consumption and Choice", 'english|الجزء الأول|5': "Concept 5: Sharing the Planet", 'english|الجزء الثاني|6': "Concept 6: A World for All", 'english|الجزء الثاني|7': "Concept 7: Passion and Purpose", 'english|الجزء الثاني|8': "Concept 8: Identity Across Time", 'english|الجزء الثاني|9': "Concept 9: Belonging and Well-being", 'english|الجزء الثاني|10': "Concept 10: Invisible Consumption",
@@ -28,6 +53,7 @@ const REVISIONS = [
   { title: 'كتاب الامتحان فيزياء تانية ثانوي، الفصل الثالث: التداخل والحيود', channel: 'Mr. Abdalla Zein Eldin', url: 'https://www.youtube.com/watch?v=eetN6qv6U8A' },
 ];
 const byId = (id: string) => LESSONS.find(l => l.id === id)!;
+const subj_title = (id: string) => SUBJECTS.find(s => s.id === id)!.title;
 const subj = (id: string) => SUBJECTS.find(s => s.id === id)!.title;
 
 
@@ -102,8 +128,8 @@ function Home({ go, done }: { go: (v: View) => void; done: number }) {
       <button type="button" className="mz-card is-live" onClick={() => go({ name: 'study' })}>
         <span className="mz-tag">متاح الآن</span><strong>تانية بكالوريا</strong><span>مسار الطب وعلوم الحياة</span><small>{LESSONS.length} درس في الفيزياء والرياضيات</small>
       </button>
-      {['الهندسة وعلوم الحاسب', 'الأعمال', 'الآداب والفنون'].map(t => <div key={t} className="mz-card is-soon"><span className="mz-tag mz-soon">قريبًا</span><strong>تانية بكالوريا</strong><span>مسار {t}</span></div>)}
-      <div className="mz-card is-soon"><span className="mz-tag mz-soon">قريبًا</span><strong>أولى ثانوي (التمهيدي)</strong><span>كل المواد</span></div>
+      <div className="mz-card is-soon"><span className="mz-tag mz-soon">قريبًا</span><strong>كتب المسارات التانية</strong><span>الفهارس لسه ناقصة في الهندسة والأعمال والآداب (المواد الإضافية موجودة في «ذاكر»)</span></div>
+      <div className="mz-card is-soon"><span className="mz-tag mz-soon">متاح</span><strong>أولى ثانوي · الترم الأول</strong><span>١٣ مادة في «ذاكر»، الترم الثاني لسه</span></div>
     </div>
     <p className="mz-note">خلّصت {done} درس لحد دلوقتي.</p>
   </>;
@@ -111,14 +137,12 @@ function Home({ go, done }: { go: (v: View) => void; done: number }) {
 
 function Study({ go, done }: { go: (v: View) => void; done: string[] }) {
   return <>
-    <p className="mz-crumb">تانية بكالوريا · مسار الطب وعلوم الحياة</p>
     <h1 className="mz-t">اختار المادة</h1>
-    <p className="mz-note">الطالب في المسار بيدرس الرياضيات أو الفيزياء في تانية بكالوريا، حسب قرار الوزارة. الاتنين هنا.</p>
-    <div className="mz-cards">
-      {SUBJECTS.map(s => { const ls = LESSONS.filter(l => l.subject === s.id); const d = ls.filter(l => done.includes(l.id)).length;
+    <p className="mz-note">عناوين الدروس وأرقام الصفحات من كتب الوزارة الرسمية، مع رابط الكتاب. الملخصات والأسئلة بتتضاف بس لما تتكتب من الكتاب نفسه.</p>
+    {GROUPS.map(g => <section key={g.id}><h2 className="mz-h">{g.title}</h2><div className="mz-cards">
+      {SUBJECTS.filter(s => s.group === g.id).map(s => { const ls = LESSONS.filter(l => l.subject === s.id); const d = ls.filter(l => done.includes(l.id)).length;
         return <button key={s.id} type="button" className="mz-card is-live" onClick={() => go({ name: 'subject', id: s.id })}><strong>{s.title}</strong><span>{s.note}</span><Bar v={d} max={ls.length} /><small>{d} من {ls.length} درس</small></button>; })}
-    </div>
-    <div className="mz-callout"><strong>تغطية النسخة الأولى</strong>الفيزياء والرياضيات والعربي (عناوين الدروس وروابط كتب الوزارة). الإنجليزي والتاريخ والثقافة المالية هتتضاف بعدين.</div>
+    </div></section>)}
   </>;
 }
 
@@ -132,7 +156,7 @@ function Subject({ id, go, done }: { id: SubjId; go: (v: View) => void; done: st
     <h1 className="mz-t">{subj(id)}</h1>
     {parts.map(p => { const chs = Array.from(new Set(ls.filter(l => l.part === p).map(l => l.ch)));
       return <section key={p}><h2 className="mz-h">{p}</h2>
-        {chs.map(c => <div key={c} className="mz-unit"><h3>{c === 0 ? '' : `الفصل ${c}`}: {CHAPTERS[`${id}|${p}|${c}`]}</h3>
+        {chs.map(c => <div key={c} className="mz-unit"><h3>{c === 0 ? '' : `الفصل ${c}`}: {(CHAPTERS[`${id}|${p}|${c}`] ?? ls.find(l => l.part === p && l.ch === c)?.chTitle)}</h3>
           {ls.filter(l => l.part === p && l.ch === c).map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}>
             <span className="mz-num"><bdi>{l.num}</bdi></span><span className="mz-lt">{l.title}</span>
             <span className="mz-badges">{QUESTIONS.some(q => q.lesson === l.id) && <b>أسئلة</b>}{l.video && <b>فيديو</b>}{done.includes(l.id) && <b className="mz-ok">تم</b>}</span></button>)}
@@ -192,17 +216,18 @@ const STOP = new Set(['ما', 'هو', 'هي', 'ماذا', 'يعني', 'ايه', 
 const toks = (t: string) => norm(t).split(/[^a-z0-9\u0621-\u064A]+/).filter(w => w.length > 1 && !STOP.has(w)).map(w => w.replace(/^(ال|وال|بال|لل)/, ''));
 type Msg = { who: 'me' | 'bot'; text: string; ids?: string[]; qs?: string[] };
 function Bot({ go }: { go: (v: View) => void }) {
+  const [grp, setGrp] = useState('tb');
   const [subj, setSubj] = useState<SubjId>('physics');
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState('');
-  const sname = subj === 'physics' ? 'الفيزياء' : subj === 'arabic' ? 'اللغة العربية' : subj === 'history' ? 'التاريخ' : subj === 'english' ? 'اللغة الإنجليزية' : 'الرياضيات';
+  const sname = subj ? subj_title(subj) : '';
   const ask = (e: React.FormEvent) => {
     e.preventDefault(); const q = text.trim(); if (!q) return; setText('');
     const qt = toks(q);
     const scored = LESSONS.filter(l => l.subject === subj).map(l => { const lt = toks(l.title); return { l, s: qt.filter(w => lt.some(x => x === w || (w.length > 3 && (x.startsWith(w) || w.startsWith(x))))).length }; }).filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 3);
     const qq = QUESTIONS.filter(x => scored.some(c => c.l.id === x.lesson)).map(x => x.id);
     const reply: Msg = scored.length
-      ? { who: 'bot', text: `لقيت في كتاب ${sname} الرسمي (تانية بكالوريا) الدروس دي مرتبطة بسؤالك. افتح الدرس عشان تشوف صفحة الكتاب والفيديو والأسئلة:`, ids: scored.map(x => x.l.id), qs: qq }
+      ? { who: 'bot', text: `لقيت في كتاب ${sname} الرسمي الدروس دي مرتبطة بسؤالك. افتح الدرس عشان تشوف صفحة الكتاب والفيديو والأسئلة:`, ids: scored.map(x => x.l.id), qs: qq }
       : { who: 'bot', text: `مش برد غير على مادة ${sname} من محتوى المنصة. جرّب تسأل بعنوان الدرس، زي "متجهات السرعة" أو "قانون بويل".` };
     setMsgs([...msgs, { who: 'me', text: q }, reply]);
   };
@@ -210,8 +235,8 @@ function Bot({ go }: { go: (v: View) => void }) {
     <h1 className="mz-t">بكالورياوي</h1>
     <p className="mz-note">بجاوب بس من دروس المنصة وكتب الوزارة. مش بجاوب من برّه المادة.</p>
     <div className="mz-pickrow">
-      <span className="mz-tag">تانية بكالوريا</span>
-      {(['physics', 'math', 'arabic', 'history', 'english'] as const).map(k => <button key={k} type="button" className={'mz-chipb' + (subj === k ? ' is-on' : '')} onClick={() => { setSubj(k); setMsgs([]); }}>{k === 'physics' ? 'الفيزياء' : k === 'arabic' ? 'العربي' : k === 'history' ? 'التاريخ' : k === 'english' ? 'الإنجليزي' : 'الرياضيات'}</button>)}
+      {GROUPS.map(g => <button key={g.id} type="button" className={'mz-chipb' + (grp === g.id ? ' is-on' : '')} onClick={() => { setGrp(g.id); setSubj(SUBJECTS.find(s => s.group === g.id)!.id); setMsgs([]); }}>{g.title.split(' · ')[0]}</button>)}
+      {SUBJECTS.filter(s => s.group === grp).map(s => <button key={s.id} type="button" className={'mz-chipb' + (subj === s.id ? ' is-on' : '')} onClick={() => { setSubj(s.id); setMsgs([]); }}>{s.title}</button>)}
     </div>
     <div className="mz-chat" aria-live="polite">
       {msgs.length === 0 && <div className="mz-msg bot">اسألني عن أي درس في {sname}. هدلك على الدرس وصفحة الكتاب.</div>}
@@ -240,4 +265,4 @@ function Me({ done, answers, plan, setPlan, go }: { done: string[]; answers: Rec
       <label>ساعات المذاكرة في اليوم<input type="number" min={1} max={14} value={plan.hours} onChange={e => setPlan({ ...plan, hours: Math.max(1, Math.min(14, Number(e.target.value) || 1)) })} /></label></div>
     {days > 0 ? <div className="mz-callout"><strong>خطتك</strong>فاضل {days} يوم و{left} درس. يعني حوالي {per} دروس في اليوم، وكل درس تقريبًا {Math.round(plan.hours * 60 / Math.max(per, 1))} دقيقة.</div> : <p className="mz-note">اكتب ميعاد امتحانك وتطلع الخطة.</p>}
   </>;
-    }
+}
