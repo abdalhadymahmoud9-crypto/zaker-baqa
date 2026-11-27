@@ -166,6 +166,39 @@ export function App() {
   </FileCard>;
 }
 
+
+type Sec = { h: string; ids: string[] };
+const CORE: Sec = { h: 'المواد الأساسية', ids: ['arabic', 'english', 'history'] };
+const LANGS: Sec = { h: 'لغة ثانية (اختياري)', ids: ['french2', 'german2', 'spanish2', 'italian2', 'chinese2', 'french1'] };
+const PLANS: Record<string, { title: string; note: string; secs: Sec[] }> = {
+  'طب وعلوم الحياة': { title: 'مسار الطب وعلوم الحياة', note: 'كتب المسار الرسمية متاحة.', secs: [{ h: 'مواد المسار', ids: ['physics', 'chemistry', 'math'] }, CORE, LANGS] },
+  'هندسة وعلوم الحاسب': { title: 'مسار الهندسة وعلوم الحاسب', note: 'كتب الأساسيات والبرمجة متاحة. الرياضيات والفيزياء هنا من كتب مسار الطب لحد ما نضيف كتب المسار.', secs: [{ h: 'مواد المسار', ids: ['math', 'physics', 'programming', 'chemistry'] }, CORE, LANGS] },
+  'أعمال': { title: 'مسار الأعمال', note: 'كتب المسار المتاحة: مبادئ الأعمال والمحاسبة (وحدات الكتاب فقط).', secs: [{ h: 'مواد المسار', ids: ['business', 'accounting', 'math'] }, CORE, LANGS] },
+  'آداب وفنون': { title: 'مسار الآداب والفنون', note: 'كتب المسار المتاحة: علم النفس. باقي كتب المسار لسه بتتجهز.', secs: [{ h: 'مواد المسار', ids: ['psychology'] }, CORE, LANGS] },
+  'g1': { title: 'أولى ثانوي · الترم الأول', note: 'كتب الترم الأول الرسمية.', secs: [
+    { h: 'اللغات', ids: ['g1-arabic', 'g1-nahw', 'g1-story', 'g1-english', 'g1-english2', 'g1-french2'] },
+    { h: 'علوم ورياضيات وتكنولوجيا', ids: ['g1-math', 'g1-science', 'g1-ict'] },
+    { h: 'اجتماعيات ودين وفلسفة', ids: ['g1-history', 'g1-philosophy', 'g1-islamic', 'g1-christian'] }] },
+};
+const planKey = (p: Profile) => p.grade === 'g1' ? 'g1' : (p.track && PLANS[p.track] ? p.track : TRACKS[0]);
+
+function Row({ id, done, go, hard }: { id: string; done: string[]; go: (v: View) => void; hard?: boolean }) {
+  const s = SUBJECTS.find(x => x.id === id); if (!s) return null;
+  const ls = LESSONS.filter(l => l.subject === id); const d = ls.filter(l => done.includes(l.id)).length;
+  return <button type="button" className="mz-row" style={{ ['--c' as string]: colorOf(id) }} onClick={() => go({ name: 'subject', id })}>
+    <span className="mz-tdot">{s.title.replace(/^ال/, '').charAt(0)}</span>
+    <span className="mz-rb"><strong>{s.title}{hard && <em className="mz-flag2">صعبة عليك</em>}</strong><small>{ls.length} درس · {d} خلصت</small><Bar v={d} max={ls.length} /></span>
+    <span className="mz-chev">‹</span>
+  </button>;
+}
+function Plan({ k, done, go, hard }: { k: string; done: string[]; go: (v: View) => void; hard: string[] }) {
+  const pl = PLANS[k];
+  return <>
+    <p className="mz-note">{pl.note}</p>
+    {pl.secs.map(sec => <section key={sec.h} className="mz-sec"><h2 className="mz-h">{sec.h}</h2><div className="mz-list">{sec.ids.map(id => <Row key={id} id={id} done={done} go={go} hard={hard.includes(id)} />)}</div></section>)}
+  </>;
+}
+
 function Tile({ s, done, go, hard }: { s: typeof SUBJECTS[number]; done: string[]; go: (v: View) => void; hard?: boolean }) {
   const ls = LESSONS.filter(l => l.subject === s.id); const d = ls.filter(l => done.includes(l.id)).length;
   return <button type="button" className="mz-tile" style={{ ['--c' as string]: colorOf(s.id) }} onClick={() => go({ name: 'subject', id: s.id })}>
@@ -192,9 +225,8 @@ function Home({ go, profile, streak, todayCount, dueIds, focus, onFocus, last, d
     <button type="button" className="mz-cta" onClick={cta}><small>{nextL ? 'كمّل من حيث وقفت' : 'ابدأ من هنا'}</small><strong>{nextL ? nextL.title : hardSub ? `ابدأ بـ ${hardSub.title}` : 'اختار مادتك وابدأ'}</strong>{nextL && <span>{subj(nextL.subject)} · صفحة <bdi>{nextL.bookPage}</bdi></span>}</button>
     {dueIds.length > 0 && <><h2 className="mz-h">وقت المراجعة <b className="mz-count">{dueIds.length}</b></h2>
       {dueIds.slice(0, 5).map(id => <button type="button" key={id} className="mz-lesson mz-solo" onClick={() => go({ name: 'lesson', id })}><span className="mz-lt">{byId(id).title}</span><span className="mz-badges"><b>{subj(byId(id).subject)}</b></span></button>)}</>}
-    <h2 className="mz-h">موادك</h2>
-    <div className="mz-grid">{shown.map(s => <Tile key={s.id} s={s} done={doneIds} go={go} hard={profile.hard.includes(s.id)} />)}</div>
-    <button type="button" className="mz-more" onClick={() => go({ name: 'study' })}>كل المواد والبحث ‹</button>
+    <h2 className="mz-h">{PLANS[planKey(profile)].title}</h2>
+    <Plan k={planKey(profile)} done={doneIds} go={go} hard={profile.hard} />
     <Focus onDone={onFocus} total={focus} />
     <div className="mz-quick"><button type="button" onClick={() => go({ name: 'exam' })}><Icon k="exam" />امتحن نفسك</button><button type="button" onClick={() => go({ name: 'review' })}><Icon k="review" />مراجعات نهائية</button></div>
   </>;
@@ -202,6 +234,7 @@ function Home({ go, profile, streak, todayCount, dueIds, focus, onFocus, last, d
 
 function Study({ go, done, profile }: { go: (v: View) => void; done: string[]; profile: Profile }) {
   const [q, setQ] = useState('');
+  const [vt, setVt] = useState(planKey(profile));
   const mine = myGroups(profile);
   const ordered = [...GROUPS.filter(g => mine.includes(g.id)), ...GROUPS.filter(g => !mine.includes(g.id))];
   const found = q.trim().length > 1 ? LESSONS.filter(l => (l.title + ' ' + (l.chTitle || '')).toLowerCase().includes(q.trim().toLowerCase())) : [];
@@ -209,9 +242,9 @@ function Study({ go, done, profile }: { go: (v: View) => void; done: string[]; p
     <h1 className="mz-t">المواد</h1>
     <input className="mz-search" type="search" value={q} placeholder="دوّر على أي درس..." aria-label="بحث" onChange={e => setQ(e.target.value)} />
     {q.trim().length > 1 && <div className="mz-unit">{found.length === 0 && <p className="mz-note mz-pad">مفيش درس بالاسم ده.</p>}{found.slice(0, 25).map(l => <button type="button" key={l.id} className="mz-lesson" onClick={() => go({ name: 'lesson', id: l.id })}><span className="mz-lt">{l.title}</span><span className="mz-badges"><b>{subj(l.subject)}</b></span></button>)}</div>}
-    {profile.grade === 'g2' && profile.track && profile.track !== TRACKS[0] && <div className="mz-callout"><strong>مسارك: {profile.track}</strong>كتب مسارك لسه بتتجهز. ده المتاح حاليًا من الكتب الرسمية.</div>}
-    {ordered.map(g => <section key={g.id}><h2 className="mz-h">{g.title}</h2><div className="mz-grid">
-      {SUBJECTS.filter(s => s.group === g.id).map(s => <Tile key={s.id} s={s} done={done} go={go} hard={profile.hard.includes(s.id)} />)}</div></section>)}
+    <div className="mz-switch">{[...TRACKS.map(t => ({ k: t, l: t })), { k: 'g1', l: 'أولى ثانوي' }].map(x => <button key={x.k} type="button" className={'mz-chipb' + (vt === x.k ? ' is-on' : '')} onClick={() => setVt(x.k)}>{x.l}</button>)}</div>
+    <h2 className="mz-t2">{PLANS[vt].title}</h2>
+    <Plan k={vt} done={done} go={go} hard={profile.hard} />
     <p className="mz-note mz-pad">العناوين وأرقام الصفحات من كتب الوزارة الرسمية. الملخصات والأسئلة بتتضاف بس لما تتكتب من الكتاب نفسه.</p>
   </>;
 }
