@@ -94,3 +94,13 @@ html, body, #root { margin: 0; min-height: 100%; }
 .mz-app .mz-chipb.is-on,.mz-app .mz-ask button,.mz-app .mz-pills button{color:#1f2747}
 .mz-app .mz-msg.me{color:#fff} .mz-app .mz-cta{color:#1f2747}
 .mz-app .mz-back,.mz-app .mz-more,.mz-app .mz-inline{color:var(--acc)}
+.mz-switch{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;margin:0 -4px;scrollbar-width:none} .mz-switch .mz-chipb{flex:none;white-space:nowrap}
+.mz-t2{font-size:20px;font-weight:900;margin:8px 0 2px}
+.mz-sec .mz-h{margin:18px 0 8px;font-size:15px;color:var(--ink2);font-weight:800}
+.mz-list{display:flex;flex-direction:column;gap:10px}
+.mz-row{display:flex;align-items:center;gap:12px;width:100%;text-align:start;background:var(--card);border:0;border-radius:20px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;min-height:76px;border-inline-start:6px solid var(--c)}
+.mz-rb{flex:1;min-width:0;display:flex;flex-direction:column} .mz-rb strong{font-size:17px;font-weight:800;line-height:1.35} .mz-rb small{color:var(--ink2);font-size:13px}
+.mz-chev{color:var(--ink2);font-size:22px}
+.mz-flag2{font-style:normal;font-size:11px;font-weight:800;background:#fff1d6;color:#9a6a00;border-radius:8px;padding:0 8px;margin-inline-start:8px}
+.mz-switch{display:grid;grid-template-columns:1fr 1fr;overflow:visible;margin:0}
+.mz-switch .mz-chipb{white-space:normal;min-height:44px;padding:0 8px;font-size:14px}
