@@ -104,3 +104,63 @@ html, body, #root { margin: 0; min-height: 100%; }
 .mz-flag2{font-style:normal;font-size:11px;font-weight:800;background:#fff1d6;color:#9a6a00;border-radius:8px;padding:0 8px;margin-inline-start:8px}
 .mz-switch{display:grid;grid-template-columns:1fr 1fr;overflow:visible;margin:0}
 .mz-switch .mz-chipb{white-space:normal;min-height:44px;padding:0 8px;font-size:14px}
+/* ===== WhatsApp-like flat skin ===== */
+.mz-app{--bg:#ffffff;--card:#ffffff;--line:#e9edef;--ink:#111b21;--ink2:#667781;--sh:none;--accsoft:#e7f6f2;font-size:16px}
+.mz-app[data-theme="dark"]{--bg:#111b21;--card:#111b21;--line:#222d34;--ink:#e9edef;--ink2:#8696a0;--accsoft:#1d3b44}
+.mz-top{background:var(--navy);box-shadow:none;padding:4px 16px;color:#fff} .mz-top .mz-brand{color:#fff;font-size:21px} .mz-top .mz-theme{background:rgba(255,255,255,.14);color:#fff}
+.mz-main{padding:0 0 8px;max-width:720px}
+.mz-main>*{margin-inline:16px} .mz-main>.mz-hd,.mz-main>section{margin-inline:0}
+.mz-hd{background:none;color:var(--ink);box-shadow:none;border-radius:0;padding:16px 16px 4px}
+.mz-chip{background:var(--accsoft);color:var(--acc);font-size:13px}
+.mz-hd h1{font-size:24px;margin:8px 0 0;color:var(--ink)} .mz-hd p{color:var(--ink2);margin:0 0 10px;opacity:1;font-size:15px}
+.mz-kpis{display:flex;gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mz-kpis div{flex:1;background:none;border-radius:0;padding:10px 0;display:flex;flex-direction:column;align-items:center}
+.mz-kpis b{color:var(--acc);font-size:22px} .mz-kpis span{color:var(--ink2);opacity:1}
+.mz-cta{margin:12px 16px 0;width:calc(100% - 32px);background:var(--accsoft);color:var(--ink) !important;border-radius:14px;box-shadow:none;padding:12px 16px}
+.mz-app .mz-cta{color:var(--ink)} .mz-cta small{color:var(--acc);opacity:1} .mz-cta strong{font-size:17px} .mz-cta span{color:var(--ink2)}
+.mz-t{font-size:22px;margin:14px 16px 8px} .mz-h{font-size:14px;color:var(--acc);margin:18px 16px 4px;font-weight:800}
+.mz-sec .mz-h{color:var(--acc);font-size:14px;margin:18px 16px 2px}
+.mz-note,.mz-crumb{margin:4px 16px} .mz-main>.mz-note{margin-inline:16px}
+.mz-search{width:calc(100% - 32px);margin:4px 16px 8px;background:#f0f2f5;border:0;min-height:44px}
+.mz-app[data-theme="dark"] .mz-search{background:#202c33}
+.mz-switch{margin:4px 12px 4px !important;display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap}
+.mz-switch .mz-chipb{flex:none;white-space:nowrap;min-height:36px;border:0;background:#f0f2f5;color:var(--ink2);font-size:14px;padding:0 14px}
+.mz-app[data-theme="dark"] .mz-switch .mz-chipb{background:#202c33}
+.mz-switch .mz-chipb.is-on{background:#d9fdd3;color:#0b5c4c} .mz-app .mz-switch .mz-chipb.is-on{color:#0b5c4c}
+.mz-t2{font-size:18px;margin:10px 16px 0}
+.mz-list{gap:0}
+.mz-row{background:none;box-shadow:none;border-radius:0;border:0;border-bottom:1px solid var(--line);padding:10px 16px;min-height:72px;gap:14px}
+.mz-row .mz-tdot{width:52px;height:52px;border-radius:50%;font-size:22px;margin:0}
+.mz-rb strong{font-size:17px} .mz-rb .mz-bar{height:4px;margin:6px 0 0} .mz-chev{display:none}
+.mz-flag2{background:var(--accsoft);color:var(--acc)}
+.mz-unit{background:none;box-shadow:none;border-radius:0;margin:0}
+.mz-unit summary{padding:14px 16px;background:#f0f2f5;font-size:14px;color:var(--ink2);min-height:48px} .mz-app[data-theme="dark"] .mz-unit summary{background:#202c33}
+.mz-lesson{border-top:0;border-bottom:1px solid var(--line);padding:10px 16px;min-height:60px}
+.mz-solo{background:none;box-shadow:none;border-radius:0;margin:0}
+.mz-num{background:none;color:var(--ink2);border:1.5px solid var(--line);border-radius:50%;min-width:38px;width:38px;height:38px;font-size:11px;padding:0} .mz-num.is-done{background:var(--acc);border-color:var(--acc);color:#fff}
+.mz-badges b{background:none;color:var(--acc);padding:0 4px}
+.mz-shead{margin:8px 16px} .mz-shead .mz-tdot{border-radius:50%;width:52px;height:52px}
+.mz-back{margin:0 16px}
+.mz-main>.mz-bar{margin-inline:16px}
+.mz-lh{font-size:21px;margin:4px 16px 8px}
+.mz-step{background:none;box-shadow:none;border-radius:0;border-top:1px solid var(--line);padding:14px 16px;margin:0}
+.mz-sn{background:var(--accsoft);color:var(--acc);width:30px;height:30px}
+.mz-big{background:var(--acc);border-radius:22px;text-align:center}
+.mz-q{background:#f0f2f5} .mz-app[data-theme="dark"] .mz-q{background:#202c33}
+.mz-opt{border-radius:10px} .mz-notes{background:#f0f2f5;border:0} .mz-app[data-theme="dark"] .mz-notes{background:#202c33}
+.mz-donebar{background:none;bottom:68px;inset-inline:auto;inset-inline-start:16px;padding:0;pointer-events:none}
+.mz-donebar .mz-donebtn{width:auto;min-width:0;padding:0 22px;margin:0;border-radius:28px;background:var(--acc);color:#fff;pointer-events:auto;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+.mz-app .mz-donebtn{background:var(--acc);color:#fff} .mz-app .mz-donebtn.is-on{background:var(--yel);color:#1f2747}
+.mz-quick{margin:14px 16px 0;gap:8px} .mz-quick button{box-shadow:none;background:#f0f2f5;border-radius:24px;min-height:46px} .mz-app[data-theme="dark"] .mz-quick button{background:#202c33}
+.mz-focus{box-shadow:none;background:#f0f2f5;border-radius:14px;margin:14px 16px 0} .mz-app[data-theme="dark"] .mz-focus{background:#202c33}
+.mz-tabs{inset-inline:0;bottom:0;border-radius:0;max-width:none;background:var(--card);box-shadow:none;border-top:1px solid var(--line);padding:6px 4px 8px}
+.mz-app .mz-tabs button{color:var(--ink2);border-radius:0;background:none;min-height:52px;font-size:12px}
+.mz-app .mz-tabs .is-on{color:var(--ink);background:none;font-weight:800} .mz-tabs .is-on svg{background:#d9fdd3;color:#0b5c4c;border-radius:14px;width:56px;height:30px;padding:4px 16px;box-sizing:border-box}
+.mz-donebar{bottom:66px}
+.mz-callout{margin:12px 16px;border-radius:12px}
+.mz-msg{box-shadow:none;border-radius:12px;background:#f0f2f5} .mz-msg.me{background:#d9fdd3;color:#111b21 !important} .mz-app .mz-msg.me{color:#111b21} .mz-chat,.mz-ask,.mz-chips{margin-inline:16px}
+.mz-app[data-theme="dark"] .mz-msg{background:#202c33} .mz-app[data-theme="dark"] .mz-msg.me{background:#005c4b;color:#e9edef} .mz-app[data-theme="dark"].mz-app .mz-msg.me{color:#e9edef}
+.mz-stats{margin:0 16px} .mz-stats div{background:#f0f2f5;color:var(--ink);border-radius:14px} .mz-stats strong{color:var(--acc)} .mz-app[data-theme="dark"] .mz-stats div{background:#202c33}
+.mz-form{margin:0 16px}
+.mz-foot,.mz-main>.mz-pad{margin-inline:16px}
+.mz-ask button{background:var(--acc);color:#fff} .mz-app .mz-ask button{color:#fff}
